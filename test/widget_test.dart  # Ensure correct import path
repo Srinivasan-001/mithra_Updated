@@ -1,0 +1,9 @@
+import 'package:flutter_application_1/main.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  testWidgets('hello world test', (WidgetTester tester) async {
+    await tester.pumpWidget(MyApp());
+    expect(find.text('Hello, world!'), findsOneWidget);
+  });
+}
