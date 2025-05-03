@@ -1,0 +1,271 @@
+/home/ubuntu/project/lib/core/constants/routes.dart:1:class AppRoutes {
+/home/ubuntu/project/lib/core/constants/routes.dart:4:  static const String signup = '/signup'; // Added signup route
+/home/ubuntu/project/lib/core/constants/routes.dart:6:  static const String profile = '/profile'; // Added profile route
+/home/ubuntu/project/lib/data/models/emergency_contact.dart:22:  factory EmergencyContact.fromJson(Map<String, dynamic> json) {
+/home/ubuntu/project/lib/data/models/emergency_contact.dart:34:  Map<String, dynamic> toJson() {
+/home/ubuntu/project/lib/main.dart:41:          initialRoute: '/',
+/home/ubuntu/project/lib/main.dart:42:          routes: {
+/home/ubuntu/project/lib/main.dart:64:          onUnknownRoute: (settings) {
+/home/ubuntu/project/lib/main.dart:65:            return MaterialPageRoute(
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:23:    Map<String, dynamic> data = doc.data() as Map<String, dynamic>? ?? {};
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:29:              ? PeopleDetectedData.fromMap(
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:30:                data['peopleDetected'] as Map<String, dynamic>,
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:35:              ? IncidentData.fromMap(
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:36:                data['loneWomenIncidents'] as Map<String, dynamic>,
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:41:              ? IncidentData.fromMap(
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:42:                data['womenSurroundedIncidents'] as Map<String, dynamic>,
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:47:              ? SosGestureData.fromMap(
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:48:                data['sosGestures'] as Map<String, dynamic>,
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:53:              ? HotspotData.fromMap(
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:54:                data['incidentHotspots'] as Map<String, dynamic>,
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:67:  final Map<String, num>? monthlyCounts; // e.g., {"Jan": 100, "Feb": 120}
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:76:  factory PeopleDetectedData.fromMap(Map<String, dynamic> map) {
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:78:      total: map['total'] as int?,
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:79:      womenPercent: map['womenPercent'] as num?,
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:80:      menPercent: map['menPercent'] as num?,
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:81:      monthlyCounts: (map['monthlyCounts'] as Map<String, dynamic>? ?? {}).map(
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:82:        (key, value) => MapEntry(key, value as num),
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:90:  final Map<String, Map<String, num>>?
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:95:  factory IncidentData.fromMap(Map<String, dynamic> map) {
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:96:    // Deep conversion for nested maps
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:97:    Map<String, Map<String, num>>? trendData;
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:98:    if (map['monthlyTrend'] != null) {
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:99:      trendData = (map['monthlyTrend'] as Map<String, dynamic>).map(
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:100:        (seriesKey, monthlyMap) => MapEntry(
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:102:          (monthlyMap as Map<String, dynamic>).map(
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:103:            (monthKey, value) => MapEntry(monthKey, value as num),
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:110:      lastHour: map['lastHour'] as int?,
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:118:  final Map<String, num>? distribution; // e.g., {"A": 10, "B": 5}
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:122:  factory SosGestureData.fromMap(Map<String, dynamic> map) {
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:124:      detectedLastHour: map['detectedLastHour'] as int?,
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:125:      distribution: (map['distribution'] as Map<String, dynamic>? ?? {}).map(
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:126:        (key, value) => MapEntry(key, value as num),
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:133:  final List<HotspotLocation>? topLocations;
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:135:  HotspotData({this.topLocations});
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:137:  factory HotspotData.fromMap(Map<String, dynamic> map) {
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:138:    List<HotspotLocation>? locations;
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:139:    if (map['topLocations'] != null) {
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:140:      locations =
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:141:          (map['topLocations'] as List<dynamic>)
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:142:              .map(
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:143:                (item) => HotspotLocation.fromMap(item as Map<String, dynamic>),
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:147:    return HotspotData(topLocations: locations);
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:151:class HotspotLocation {
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:155:  HotspotLocation({this.name, this.countLastMonth});
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:157:  factory HotspotLocation.fromMap(Map<String, dynamic> map) {
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:158:    return HotspotLocation(
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:159:      name: map['name'] as String?,
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:160:      countLastMonth: map['countLastMonth'] as int?,
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:203:// Helper to generate chart spots from monthly data map
+/home/ubuntu/project/lib/presentation/models/dashboard_analytics_data.dart:204:List<FlSpot> generateSpots(Map<String, num>? data, [int maxMonths = 6]) {
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:16:// Helper to generate FlSpot list from map
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:17:List<FlSpot> generateSpots(Map<String, dynamic>? data) {
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:35:  final Map<String, dynamic>?
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:44:  factory GenderData.fromMap(Map<String, dynamic>? map) {
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:45:    if (map == null) return GenderData(womenPercent: 0, menPercent: 0);
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:47:      womenPercent: (map['womenPercent'] as num?)?.toDouble() ?? 0.0,
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:48:      menPercent: (map['menPercent'] as num?)?.toDouble() ?? 0.0,
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:49:      monthlyDistribution: map['monthlyDistribution'] as Map<String, dynamic>?,
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:56:  final Map<String, dynamic>? monthlyTrend1; // e.g., {'1': 50, '2': 60, ...}
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:57:  final Map<String, dynamic>? monthlyTrend2; // Optional second series
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:65:  factory IncidentTrendData.fromMap(Map<String, dynamic>? map) {
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:66:    if (map == null) return IncidentTrendData(currentIncidents: 0);
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:68:      currentIncidents: (map['currentIncidents'] as num?)?.toInt() ?? 0,
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:69:      monthlyTrend1: map['monthlyTrend1'] as Map<String, dynamic>?,
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:70:      monthlyTrend2: map['monthlyTrend2'] as Map<String, dynamic>?,
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:77:  // Add more fields if needed based on screenshot 3's heatmap
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:81:  factory SosAlertData.fromMap(Map<String, dynamic>? map) {
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:82:    if (map == null) return SosAlertData(alertCount: 0);
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:83:    return SosAlertData(alertCount: (map['alertCount'] as num?)?.toInt() ?? 0);
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:88:  final String locationName;
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:91:  HotspotData({required this.locationName, required this.incidentCount});
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:93:  factory HotspotData.fromMap(Map<String, dynamic>? map) {
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:94:    if (map == null) {
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:95:      return HotspotData(locationName: 'Unknown', incidentCount: 0);
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:98:      locationName: map['locationName'] as String? ?? 'Unknown',
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:99:      incidentCount: (map['incidentCount'] as num?)?.toInt() ?? 0,
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:167:    HotspotData(locationName: 'Main Street', incidentCount: 12),
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:168:    HotspotData(locationName: 'Park Avenue', incidentCount: 9),
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:169:    HotspotData(locationName: 'Elm Street', incidentCount: 8),
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:170:    HotspotData(locationName: 'Oak Street', incidentCount: 7),
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:375:              ? series1Spots.map((s) => s.y).reduce((a, b) => a > b ? a : b)
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:379:              ? series2Spots.map((s) => s.y).reduce((a, b) => a > b ? a : b)
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:454:              series1Spots.map((spot) {
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:514:            // TODO: Add heatmap/bar from screenshot 3 if needed
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:524:      icon: Icons.location_pin,
+/home/ubuntu/project/lib/presentation/screens/dashboard_screen.dart:537:                      hotspot.locationName,
+/home/ubuntu/project/lib/presentation/screens/edit_profile_screen.dart:73:        final data = docSnapshot.data() as Map<String, dynamic>;
+/home/ubuntu/project/lib/presentation/screens/edit_profile_screen.dart:89:          final contact1 = emergencyContacts[0] as Map<String, dynamic>?;
+/home/ubuntu/project/lib/presentation/screens/edit_profile_screen.dart:94:          final contact2 = emergencyContacts[1] as Map<String, dynamic>?;
+/home/ubuntu/project/lib/presentation/screens/edit_profile_screen.dart:135:    // Prepare updated data map
+/home/ubuntu/project/lib/presentation/screens/edit_profile_screen.dart:253:                    items: _genders.map((String gender) {
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:6:import 'package:google_maps_flutter/google_maps_flutter.dart';
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:8:import 'package:geolocator/geolocator.dart';
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:9:import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:35:  final Completer<GoogleMapController> _mapController = Completer();
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:36:  LatLng? _currentPosition;
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:38:  bool _locationPermissionGranted = false;
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:43:  final Set<Marker> _markers = {};
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:44:  final Set<Polyline> _polylines = {};
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:45:  final List<LatLng> _polylineCoordinates = [];
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:46:  final PolylinePoints _polylinePoints = PolylinePoints();
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:47:  LatLng? _originPosition;
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:48:  LatLng? _destinationPosition;
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:49:  bool _useCurrentLocationAsOrigin =
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:50:      true; // Toggle for using current location or custom origin
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:73:    target: LatLng(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:76:    ), // Default location (e.g., Googleplex)
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:83:    _requestLocationPermission();
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:156:  // --- Location & Map Methods ---
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:158:  Future<void> _requestLocationPermission() async {
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:159:    var status = await Permission.locationWhenInUse.status;
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:161:      _logger.i('Requesting location permission...');
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:162:      status = await Permission.locationWhenInUse.request();
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:166:      _logger.i('Location permission granted.');
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:169:          _locationPermissionGranted = true;
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:172:      _getCurrentLocationAndTrack();
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:174:      _logger.w('Location permission denied. Status: $status');
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:177:              ? 'Location permission permanently denied. Please enable it in app settings.'
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:178:              : 'Location permission is required to send alerts with your location.';
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:188:        _locationPermissionGranted = false;
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:193:  Future<Position?> _getLatestLocation() async {
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:194:    if (!_locationPermissionGranted) {
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:195:      _logger.w('Cannot get location: Permission not granted.');
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:197:      await _requestLocationPermission();
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:198:      if (!_locationPermissionGranted) return null;
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:202:      Position? position = await Geolocator.getLastKnownPosition();
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:203:      position ??= await Geolocator.getCurrentPosition(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:204:        locationSettings: const LocationSettings(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:205:          accuracy: LocationAccuracy.high,
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:212:          _currentPosition = LatLng(position!.latitude, position.longitude);
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:216:        'Fetched latest location: ${_currentPosition?.latitude}, ${_currentPosition?.longitude}',
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:220:      _logger.e("Error getting latest location: $e");
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:223:          SnackBar(content: Text('Could not get current location: $e')),
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:230:  Future<void> _getCurrentLocationAndTrack() async {
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:231:    Position? position = await _getLatestLocation();
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:234:      _startLocationTracking(); // Start continuous tracking
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:238:  void _startLocationTracking() {
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:240:    if (!_locationPermissionGranted) return; // Don't track without permission
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:242:    const LocationSettings locationSettings = LocationSettings(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:243:      accuracy: LocationAccuracy.high,
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:246:    _positionStreamSubscription = Geolocator.getPositionStream(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:247:      locationSettings: locationSettings,
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:252:            _currentPosition = LatLng(position.latitude, position.longitude);
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:253:            _updateMarkers();
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:258:        _logger.e("Location tracking error: $error");
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:262:    _logger.i('Started location tracking stream.');
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:268:        final GoogleMapController controller = await _mapController.future;
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:278:        _logger.e("Error moving map camera: $e");
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:284:  LatLng? _parseCoordinates(String input) {
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:288:        return LatLng(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:297:  Future<LatLng?> _geocodeAddress(String address) async {
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:299:      List<Location> locations = await locationFromAddress(address);
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:300:      if (locations.isNotEmpty) {
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:301:        return LatLng(locations.first.latitude, locations.first.longitude);
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:309:  Future<String?> _reverseGeocode(LatLng position) async {
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:337:    LatLng? coords = _parseCoordinates(_originController.text);
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:344:          const SnackBar(content: Text('Could not find starting location.')),
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:352:      _updateMarkers();
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:361:    LatLng? coords = _parseCoordinates(_destinationController.text);
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:376:      _updateMarkers();
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:380:  Future<void> _getRoute() async {
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:395:    LatLng? originCoords;
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:396:    if (_useCurrentLocationAsOrigin) {
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:401:            const SnackBar(content: Text('Current location not available.')),
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:410:            const SnackBar(content: Text('Please enter a starting location.')),
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:426:    _updateMarkers();
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:429:      PointLatLng origin = PointLatLng(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:433:      PointLatLng destination = PointLatLng(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:438:      final request = PolylineRequest(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:444:      PolylineResult result = await _polylinePoints.getRouteBetweenCoordinates(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:450:        _polylineCoordinates.clear();
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:452:          _polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:455:          _polylines.clear();
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:456:          _polylines.add(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:457:            Polyline(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:458:              polylineId: const PolylineId("route"),
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:460:              points: _polylineCoordinates,
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:465:        _adjustCameraToFitRoute();
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:487:  void _updateMarkers() async {
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:488:    final Set<Marker> updatedMarkers = {};
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:494:      updatedMarkers.add(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:495:        Marker(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:496:          markerId: const MarkerId("currentLocation"),
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:499:            title: "My Current Location",
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:502:          icon: BitmapDescriptor.defaultMarkerWithHue(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:503:            BitmapDescriptor.hueAzure,
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:509:    if (!_useCurrentLocationAsOrigin && _originPosition != null) {
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:510:      updatedMarkers.add(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:511:        Marker(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:512:          markerId: const MarkerId("originLocation"),
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:516:            snippet: _originAddress ?? "Custom location",
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:518:          icon: BitmapDescriptor.defaultMarkerWithHue(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:519:            BitmapDescriptor.hueGreen,
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:526:      updatedMarkers.add(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:527:        Marker(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:528:          markerId: const MarkerId("destinationLocation"),
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:534:          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:541:        _markers.clear();
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:542:        _markers.addAll(updatedMarkers);
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:547:  void _adjustCameraToFitRoute() async {
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:548:    if (_polylineCoordinates.isEmpty) return;
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:550:    double minLat = _polylineCoordinates.first.latitude;
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:551:    double maxLat = _polylineCoordinates.first.latitude;
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:552:    double minLng = _polylineCoordinates.first.longitude;
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:553:    double maxLng = _polylineCoordinates.first.longitude;
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:555:    for (final point in _polylineCoordinates) {
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:562:    final bounds = LatLngBounds(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:563:      southwest: LatLng(minLat, minLng),
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:564:      northeast: LatLng(maxLat, maxLng),
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:568:      final GoogleMapController controller = await _mapController.future;
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:570:        CameraUpdate.newLatLngBounds(bounds, 50.0),
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:573:      _logger.e("Error adjusting camera to fit route: $e");
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:619:    // 1. Get Current Location
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:620:    final Position? position = await _getLatestLocation();
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:622:      _logger.e("Cannot send alert: Failed to get location.");
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:626:            content: Text('Error: Could not get location for alert.'),
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:635:    final locationLink =
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:636:        "https://www.google.com/maps/search/?api=1&query=${position.latitude},${position.longitude}";
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:638:      LatLng(position.latitude, position.longitude),
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:640:    final locationInfo =
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:646:    List<Map<String, String>> emergencyContacts = [];
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:660:                  .map((contact) {
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:707:        "Emergency Alert from Shield Guardian: $userName may have fallen and needs help! Location: $locationInfo. Map: $locationLink";
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:772:          // Example action: Center map on current location
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:774:            icon: const Icon(Icons.my_location),
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:775:            tooltip: 'Center on My Location',
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:777:                _locationPermissionGranted
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:786:          GoogleMap(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:787:            mapType: MapType.normal,
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:789:            onMapCreated: (GoogleMapController controller) {
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:790:              if (!_mapController.isCompleted) {
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:791:                _mapController.complete(controller);
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:794:            myLocationEnabled: _locationPermissionGranted,
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:795:            myLocationButtonEnabled: false, // We use a custom button in AppBar
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:796:            markers: _markers,
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:797:            polylines: _polylines,
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:816:                          value: _useCurrentLocationAsOrigin,
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:819:                              _useCurrentLocationAsOrigin = value ?? true;
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:820:                              if (_useCurrentLocationAsOrigin) {
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:824:                                _updateMarkers();
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:832:                            enabled: !_useCurrentLocationAsOrigin,
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:835:                                  _useCurrentLocationAsOrigin
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:836:                                      ? 'Using Current Location'
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:837:                                      : 'Enter Starting Location',
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:848:                                      : (_useCurrentLocationAsOrigin ||
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:866:                        labelText: 'Enter Destination Location',
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:887:                    // Get Route Button
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:891:                      onPressed: _getRoute,
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:969:            title: const Text('Home / Map'),
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:981:                MaterialPageRoute(
+/home/ubuntu/project/lib/presentation/screens/home_screen.dart:994:                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+/home/ubuntu/project/lib/presentation/screens/login_screen.dart:5:import '../../core/constants/routes.dart'; // Ensure this import exists for navigation
+/home/ubuntu/project/lib/presentation/screens/login_screen.dart:63:        Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (route) => false);
+/home/ubuntu/project/lib/presentation/screens/login_screen.dart:211:                            MaterialPageRoute(
+/home/ubuntu/project/lib/presentation/screens/profile_screen.dart:74:  Widget _buildEmergencyContactItem(Map<String, dynamic>? contactData, int index) {
+/home/ubuntu/project/lib/presentation/screens/profile_screen.dart:119:                MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+/home/ubuntu/project/lib/presentation/screens/profile_screen.dart:140:          final data = snapshot.data!.data() as Map<String, dynamic>;
+/home/ubuntu/project/lib/presentation/screens/profile_screen.dart:207:                    (index) => _buildEmergencyContactItem(emergencyContactsData[index] as Map<String, dynamic>?, index),
+/home/ubuntu/project/lib/presentation/screens/sign_up_screen.dart:147:                        items: _genders.map((String gender) {
+/home/ubuntu/project/lib/presentation/widgets/emergency_button.dart:7:// Removed Firebase, Geolocator, Twilio imports as SMS logic is moved to HomeScreen
+/home/ubuntu/project/lib/presentation/widgets/emergency_button.dart:111:                 if (ModalRoute.of(context)?.isCurrent ?? false) {

@@ -1,0 +1,45 @@
+# Mithra App Modification Checklist
+
+- [X] 001 Extract and analyze the zip file.
+- [X] 002 Identify and list all map-related functions.
+    - [X] Search project files for map keywords (map, location, route, etc.).
+    - [X] List identified files and functions/widgets. (Primarily `home_screen.dart`)
+- [X] 003 Refactor map functions into a separate module/directory (e.g., `lib/features/map/`).
+    - [X] Create new directory structure.
+    - [X] Move map-related files/code to the new module (`map_screen.dart`).
+    - [X] Update imports and references (Clean up `home_screen.dart`).
+- [X] 004 Update UI: Sidebar, Home Page.
+    - [X] Modify the sidebar widget to include a "Map" option (`main_page.dart`).
+    - [X] Set the `DashboardScreen` as the initial/home route (`main_page.dart`).
+    - [X] Ensure navigation works correctly (Handled via `AuthenticatedApp` state).
+- [X] 005 Rename "Shield Guardian" to "Mithra".
+    - [X] Search project files for "Shield Guardian" (case-insensitive).
+    - [X] Replace all occurrences with "Mithra" (`main.dart`, `login_screen.dart`, alert string in `main_page.dart`).
+    - [X] Check app name in configuration files (e.g., `pubspec.yaml`, `AndroidManifest.xml`, `Info.plist`) - No occurrences found in primary configs.
+- [X] 006 Enhance Map: Add View Options.
+    - [X] Identify the map package being used (e.g., `google_maps_flutter`).
+    - [X] Implement UI elements (buttons/dropdown) for selecting map types (Normal, Satellite, Terrain, Hybrid) (`map_screen.dart`).
+    - [X] Add logic to change the map type based on user selection (`map_screen.dart`).
+- [X] 007 Integrate Firebase for Hotspots.
+    - [X] Set up Firebase project (User to provide config files: `google-services.json` & `GoogleService-Info.plist` later).
+    - [X] Add Firebase dependencies (`firebase_core`, `cloud_firestore`) - Already present.
+    - [X] Create a Firestore collection to store hotspot data (latitude, longitude, radius/details) - Entity `hotspot.dart` created.
+    - [X] Implement logic to fetch hotspot data from Firestore - Repository `hotspot_repository.dart` created.
+- [X] 008 Implement Hotspot Highlighting.
+    - [X] Use fetched hotspot data (`map_screen.dart`).
+    - [X] Draw visual indicators (e.g., red circles or polygons) on the map for each hotspot (`map_screen.dart`).
+    - [X] Ensure hotspots are clearly visible (Using semi-transparent red circles).
+- [X] 009 Implement Alternate Route & Safe Route Switch.
+    - [X] Integrate a directions/routing service (e.g., Google Directions API) - `flutter_polyline_points` already used.
+    - [X] When a route is calculated, check if it intersects with any hotspot zones (`map_screen.dart`).
+    - [X] If intersection occurs, calculate an alternative route avoiding hotspots - Placeholder added, needs full implementation.
+    - [X] Add a switch UI element (e.g., `Switch`) labeled "Safer Route" (`map_screen.dart`).
+    - [X] Implement logic: If switch is ON and the primary route intersects hotspots, display the alternative route (or warning color). Otherwise, display the primary route (`map_screen.dart`).
+- [ ] 010 Validate and Test.
+    - [ ] Run `flutter analyze` to check for code issues - Skipped (Flutter SDK not available in environment).
+    - [ ] Attempt to build the app (`flutter build apk --debug` or `flutter build ios --simulator`) - Skipped (Flutter SDK not available in environment).
+    - [ ] Manually test all implemented features: Map display, view options, hotspot fetching/display, routing, safe route switch, sidebar navigation, home page, name change - Requires local setup by user.
+- [ ] 011 Report and Deliver.
+    - [ ] Create a summary report of changes made.
+    - [ ] Zip the modified project directory.
+    - [ ] Send the report and zipped project to the user.

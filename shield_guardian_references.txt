@@ -1,0 +1,5 @@
+/home/ubuntu/project/lib/main.dart:38:          title: 'Shield Guardian',
+/home/ubuntu/project/lib/presentation/screens/login_screen.dart:153:                        'Shield Guardian',
+/home/ubuntu/project/todo.md:15:- [ ] 005 Rename "Shield Guardian" to "Mithra".
+/home/ubuntu/project/todo.md:16:    - [ ] Search project files for "Shield Guardian" (case-insensitive).
+/home/ubuntu/project/map_references.txt:233:/home/ubuntu/project/lib/presentation/screens/home_screen.dart:707:        "Emergency Alert from Shield Guardian: $userName may have fallen and needs help! Location: $locationInfo. Map: $locationLink";

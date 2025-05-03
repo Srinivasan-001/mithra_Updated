@@ -248,7 +248,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
                 childAspectRatio:
-                    crossAxisCount == 1 ? 1.8 : 1.2, // Adjust aspect ratio
+                    crossAxisCount == 1 ? 1.6 : 1.3, // Adjusted aspect ratio for better responsiveness
                 children: [
                   _buildGenderDistributionCard(_genderData),
                   _buildIncidentCard(
