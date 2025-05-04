@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:logger/logger.dart'; // Import Logger
+import 'package:logger/logger.dart';
 import 'package:flutter/foundation.dart'; // for kDebugMode
-import '../../core/constants/routes.dart'; // Ensure this import exists for navigation
-import 'sign_up_screen.dart'; // Import the Sign-Up Screen
+import '../../core/constants/routes.dart';
+import 'sign_up_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,8 +15,9 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final Logger _logger = Logger(); // Initialize logger
-  bool _isLoading = false; // Add loading state
+  final Logger _logger = Logger();
+  bool _isLoading = false;
+  bool _isPasswordVisible = false; // State for password visibility
 
   Future<void> signIn() async {
     final email = _emailController.text.trim();
@@ -34,7 +35,6 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // Basic email validation
     if (!RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(email)) {
        if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -48,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     setState(() {
-      _isLoading = true; // Start loading
+      _isLoading = true;
     });
 
     try {
@@ -57,34 +57,30 @@ class _LoginScreenState extends State<LoginScreen> {
         password: password,
       );
 
-      // Navigate to HomeScreen on successful login
       if (mounted) {
-        // Clear navigation stack and go to home
         Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (route) => false);
       }
     } on FirebaseAuthException catch (e) {
       String errorMessage;
       if (e.code == 'user-not-found' || e.code == 'invalid-credential' || e.code == 'wrong-password') {
-        // Combine common login errors for simplicity
         errorMessage = 'Invalid email or password. Please try again.';
       } else if (e.code == 'invalid-email') {
          errorMessage = 'The email address format is invalid.';
       } else if (e.code == 'user-disabled') {
          errorMessage = 'This user account has been disabled.';
       } else {
-        errorMessage = 'Login failed. Please try again later.'; // Generic error for others
+        errorMessage = 'Login failed. Please try again later.';
         if (kDebugMode) {
            _logger.e('FirebaseAuthException during sign in', error: e, stackTrace: StackTrace.current);
         }
       }
 
-      // Show error message in a SnackBar
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
-            duration: const Duration(seconds: 4), // Slightly longer duration for errors
-            backgroundColor: Colors.redAccent, // Indicate error state
+            duration: const Duration(seconds: 4),
+            backgroundColor: Colors.redAccent,
           ),
         );
       }
@@ -92,7 +88,6 @@ class _LoginScreenState extends State<LoginScreen> {
       if (kDebugMode) {
          _logger.e('Error during sign in', error: e, stackTrace: stackTrace);
       }
-      // Handle any other errors
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -105,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } finally {
        if (mounted) {
          setState(() {
-           _isLoading = false; // Stop loading regardless of outcome
+           _isLoading = false;
          });
        }
     }
@@ -127,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
             color: Colors.white,
             width: constraints.maxWidth,
             height: constraints.maxHeight,
-            child: Center( // Center content
+            child: Center(
               child: SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
@@ -135,7 +130,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Keep the existing header/logo section
                       Container(
                         decoration: const BoxDecoration(
                           shape: BoxShape.circle,
@@ -150,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 32),
                       const Text(
-                        'Shield Guardian',
+                        'Shield Guardian', // Assuming this is the app name, or change to 'Mithra'
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 32,
@@ -160,7 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 16),
                       const Text(
-                        'Welcome back! Sign in to continue.', // Updated subtitle
+                        'Welcome back! Sign in to continue.',
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 16, color: Colors.grey),
                       ),
@@ -173,25 +167,35 @@ class _LoginScreenState extends State<LoginScreen> {
                           border: OutlineInputBorder(),
                         ),
                         keyboardType: TextInputType.emailAddress,
-                        enabled: !_isLoading, // Disable field when loading
+                        enabled: !_isLoading,
                       ),
                       const SizedBox(height: 16),
+                      // Updated Password Field with visibility toggle
                       TextField(
                         controller: _passwordController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Password',
-                          prefixIcon: Icon(Icons.lock),
-                          border: OutlineInputBorder(),
-                          // Add suffix icon for password visibility toggle if needed
+                          prefixIcon: const Icon(Icons.lock),
+                          border: const OutlineInputBorder(),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _isPasswordVisible = !_isPasswordVisible;
+                              });
+                            },
+                          ),
                         ),
-                        obscureText: true,
-                        enabled: !_isLoading, // Disable field when loading
+                        obscureText: !_isPasswordVisible, // Toggle based on state
+                        enabled: !_isLoading,
                       ),
                       const SizedBox(height: 48),
                       _isLoading
-                        ? const Center(child: CircularProgressIndicator()) // Show loading indicator
+                        ? const Center(child: CircularProgressIndicator())
                         : ElevatedButton.icon(
-                            onPressed: signIn, // Directly call signIn
+                            onPressed: signIn,
                             icon: const Icon(Icons.login),
                             label: const Text('Sign in'),
                             style: ElevatedButton.styleFrom(
@@ -205,7 +209,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 16),
                       TextButton(
                         onPressed: _isLoading ? null : () {
-                          // Navigate to SignUpScreen
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -226,3 +229,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+

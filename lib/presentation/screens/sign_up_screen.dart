@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart'; // Import Bloc
+import 'package:flutter/services.dart'; // Import for InputFormatters
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
-// for kDebugMode
-import '../blocs/auth_bloc.dart'; // Import AuthBloc
+import '../blocs/auth_bloc.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -14,7 +14,6 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers remain the same
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -29,20 +28,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final List<String> _genders = ['Male', 'Female', 'Other', 'Prefer not to say'];
 
   final Logger _logger = Logger();
-  // _isLoading is now managed by Bloc state, but can be kept for UI disabling
-  // bool _isLoading = false; // We'll rely on Bloc state
+  bool _isPasswordVisible = false; // State for password visibility
 
   void _signUp() {
-    _logger.i('Sign-up process started'); // Log a message when sign-up starts
+    _logger.i('Sign-up process started');
     if (!_formKey.currentState!.validate()) {
-      // Optional: Show a snackbar if validation fails, though fields show errors
-      // ScaffoldMessenger.of(context).showSnackBar(
-      //   const SnackBar(content: Text('Please fix the errors in the form')),
-      // );
       return;
     }
 
-    // Dispatch the event to the AuthBloc
     context.read<AuthBloc>().add(
           SignUpRequested(
             email: _emailController.text.trim(),
@@ -79,11 +72,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
       appBar: AppBar(
         title: const Text('Sign Up'),
       ),
-      // Use BlocListener to react to state changes (navigation, errors)
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is Authenticated) {
-            // Navigate to home screen on successful authentication
             Navigator.pushReplacementNamed(context, '/home');
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -92,12 +83,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
             );
           } else if (state is AuthError) {
-            // Show error message
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
                 duration: const Duration(seconds: 4),
-                backgroundColor: Colors.redAccent, // Indicate error
+                backgroundColor: Colors.redAccent,
               ),
             );
           }
@@ -108,7 +98,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
             key: _formKey,
             child: SingleChildScrollView(
               child: BlocBuilder<AuthBloc, AuthState>(
-                // Use BlocBuilder to reflect loading state in the UI
                 builder: (context, state) {
                   final isLoading = state is AuthLoading;
 
@@ -133,6 +122,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                         keyboardType: TextInputType.name,
                         enabled: !isLoading,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Name is required'; // Added validation
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 16),
 
@@ -157,6 +152,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   _selectedGender = newValue;
                                 });
                               },
+                        // Optional: Add validator if gender is required
                       ),
                       const SizedBox(height: 16),
 
@@ -183,16 +179,29 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Phone Number Field
+                      // Phone Number Field (10 digits validation)
                       TextFormField(
                         controller: _phoneController,
                         decoration: const InputDecoration(
-                          labelText: 'Phone Number',
+                          labelText: 'Phone Number *',
                           prefixIcon: Icon(Icons.phone),
                           border: OutlineInputBorder(),
                         ),
-                        keyboardType: TextInputType.phone,
+                        keyboardType: TextInputType.phone, // Use phone keyboard
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly, // Allow only digits
+                          LengthLimitingTextInputFormatter(10), // Limit to 10 digits
+                        ],
                         enabled: !isLoading,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Phone number is required';
+                          }
+                          if (value.length != 10) {
+                            return 'Phone number must be exactly 10 digits';
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 16),
 
@@ -207,12 +216,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         keyboardType: TextInputType.streetAddress,
                         maxLines: 3,
                         enabled: !isLoading,
+                        // Optional: Add validator if address is required
                       ),
                       const SizedBox(height: 24),
 
                       // Emergency Contact 1
-                      const Text('Emergency Contact 1',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                      const Text('Emergency Contact 1', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _emergencyContact1NameController,
@@ -223,6 +232,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                         keyboardType: TextInputType.name,
                         enabled: !isLoading,
+                        // Optional: Add validator if required
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
@@ -233,13 +243,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           border: OutlineInputBorder(),
                         ),
                         keyboardType: TextInputType.phone,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly], // Allow only digits
                         enabled: !isLoading,
+                        // Optional: Add validator (e.g., length)
                       ),
                       const SizedBox(height: 24),
 
                       // Emergency Contact 2
-                      const Text('Emergency Contact 2',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                      const Text('Emergency Contact 2', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _emergencyContact2NameController,
@@ -260,19 +271,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           border: OutlineInputBorder(),
                         ),
                         keyboardType: TextInputType.phone,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                         enabled: !isLoading,
                       ),
                       const SizedBox(height: 24),
 
-                      // Password Field (Required)
+                      // Password Field (Required with visibility toggle)
                       TextFormField(
                         controller: _passwordController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Password *',
-                          prefixIcon: Icon(Icons.lock),
-                          border: OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.lock),
+                          border: const OutlineInputBorder(),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _isPasswordVisible = !_isPasswordVisible;
+                              });
+                            },
+                          ),
                         ),
-                        obscureText: true,
+                        obscureText: !_isPasswordVisible, // Toggle based on state
                         enabled: !isLoading,
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
@@ -294,7 +316,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 padding: const EdgeInsets.symmetric(vertical: 16),
                                 textStyle: const TextStyle(fontSize: 16),
                               ),
-                              onPressed: _signUp, // Call the updated _signUp method
+                              onPressed: _signUp,
                               child: const Text('Sign Up'),
                             ),
                       const SizedBox(height: 16),

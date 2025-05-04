@@ -61,11 +61,14 @@ dependencies:
   tflite_flutter: ^0.11.0
 
   # SMS
-  twilio_flutter: ^0.9.0 # Added Twilio for SMS alerts (updated version)
+  telephony: ^0.2.0 # Replaced flutter_sms with telephony
   geocoding: ^3.0.0
   fl_chart: ^0.71.0 # Added for dashboard charts
   intl: ^0.20.2
   flutter_application_1: ^0.0.2
+
+  # Video Player
+  youtube_player_flutter: ^9.0.1 # Added for YouTube video embedding
 
 dev_dependencies:
   flutter_test:
@@ -125,3 +128,7 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+telephony:
+  git:
+    url: https://github.com/Srinivasan-001/telephony.git
+    ref: main
