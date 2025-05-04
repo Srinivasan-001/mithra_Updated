@@ -5,11 +5,12 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:logger/logger.dart';
-import 'package:geocoding/geocoding.dart'; // For geocoding
-import 'dart:math'; // For min/max
+import 'package:geocoding/geocoding.dart';
+import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // TODO: Securely manage API Key - consider using environment variables or Flutter flavors
-const String googleApiKey = "AIzaSyCq2s28kdJlvauO88jHCwqjW2vwrEAmsA8";
+const String googleApiKey = "AIzaSyCq2s28kdJlvauO88jHCwqjW2vwrEAmsA8"; // Replace with your actual key management strategy
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -45,8 +46,9 @@ class _MapScreenState extends State<MapScreen> {
 
   // Hotspots
   final Set<Circle> _hotspotCircles = {};
-  List<LatLng> _hotspots = []; // Placeholder for fetched hotspots
-  bool _showHotspotsOnRoute = false;
+  List<Map<String, dynamic>> _hotspots = []; // Updated to store full hotspot data
+  bool _isLoadingHotspots = false;
+  bool _displayAllHotspots = false; // New state variable to control general hotspot visibility
 
   // Map Type
   MapType _currentMapType = MapType.normal;
@@ -60,7 +62,7 @@ class _MapScreenState extends State<MapScreen> {
   void initState() {
     super.initState();
     _requestLocationPermission();
-    _fetchHotspots(); // Fetch hotspot data
+    _fetchHotspots(); // Fetch hotspot data from Firestore
 
     // Add listeners to text controllers
     _originController.addListener(() {
@@ -89,31 +91,50 @@ class _MapScreenState extends State<MapScreen> {
     super.dispose();
   }
 
-  // --- Hotspot Methods ---
+  // --- Hotspot Methods with Firestore Integration ---
   Future<void> _fetchHotspots() async {
+    if (_isLoadingHotspots) return;
+
     try {
-      // TODO: Implement real Firebase/Firestore fetching logic
-      // For now we're simulating with placeholder data
-      await Future.delayed(const Duration(seconds: 1)); // Simulate network delay
-      
-      // Example hotspot data - in a real app this would come from Firestore
-      final List<Map<String, dynamic>> hotspotData = [
-        {'lat': 37.430, 'lng': -122.085, 'radius': 100, 'risk_level': 'high'},
-        {'lat': 37.425, 'lng': -122.080, 'radius': 150, 'risk_level': 'medium'},
-      ];
-      
+      setState(() {
+        _isLoadingHotspots = true;
+      });
+
+      // Connect to Firestore and fetch hotspot data
+      final QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('hotspots') // Ensure this collection name matches your Firestore
+          .get();
+
       if (mounted) {
         setState(() {
-          _hotspots = hotspotData.map((data) => 
-            LatLng(data['lat'] as double, data['lng'] as double)
-          ).toList();
-          _updateHotspotCircles();
+          // Convert Firestore documents to usable map data
+          _hotspots = snapshot.docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>?; // Cast data
+            final GeoPoint? location = data?["location"] as GeoPoint?; // Get the GeoPoint field
+            return {
+              "id": doc.id,
+              // Extract lat/lng from GeoPoint, provide defaults if null or field missing
+              "lat": location?.latitude ?? 0.0,
+              "lng": location?.longitude ?? 0.0,
+              "radius": (data?["radius"] as num?)?.toDouble() ?? 100.0, // Handle int/double from Firestore
+              "risk_level": data?["risk_level"] as String? ?? "medium", // Default risk level
+              "description": data?["description"] as String? ?? "", // Optional description
+            };
+          }).toList();
+
+          _isLoadingHotspots = false;
+          _updateHotspotCircles(); // Update circles once data is fetched
         });
       }
-      _logger.i("Fetched ${_hotspots.length} hotspots (placeholder data).");
+
+      _logger.i("Fetched ${_hotspots.length} hotspots from Firebase.");
     } catch (e) {
-      _logger.e("Error fetching hotspots: $e");
+      _logger.e("Error fetching hotspots from Firebase: $e");
       if (mounted) {
+        setState(() {
+          _isLoadingHotspots = false;
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Could not load safety data: $e")),
         );
@@ -121,21 +142,60 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  // Helper function to get color based on risk level
+  Color _getHotspotColor(String? riskLevel) {
+    switch (riskLevel?.toLowerCase()) {
+      case 'high':
+        return Colors.red;
+      case 'medium':
+        return Colors.orange;
+      case 'low':
+        return Colors.yellow;
+      default:
+        return Colors.grey; // Use a default color for unknown/missing risk
+    }
+  }
+
   void _updateHotspotCircles() {
     _hotspotCircles.clear();
-    for (int i = 0; i < _hotspots.length; i++) {
+
+    for (final hotspot in _hotspots) {
+      final riskLevel = hotspot['risk_level'] as String? ?? 'medium';
+      final circleColor = _getHotspotColor(riskLevel);
+
       _hotspotCircles.add(
         Circle(
-          circleId: CircleId('hotspot_$i'),
-          center: _hotspots[i],
-          radius: 100, // Example radius in meters
-          fillColor: Colors.red.withAlpha(76), // Using withAlpha instead of withOpacity
-          strokeColor: Colors.red,
-          strokeWidth: 1,
+          circleId: CircleId('hotspot_${hotspot['id']}'),
+          center: LatLng(hotspot['lat'], hotspot['lng']),
+          radius: hotspot['radius'] ?? 100.0, // Use the radius from data or default
+          fillColor: circleColor.withAlpha(70),
+          strokeColor: circleColor,
+          strokeWidth: 2,
         ),
       );
     }
-    // No need to call setState here if called within another setState block
+    // No need to call setState here as this is usually called within another setState
+  }
+
+  // Check if a single location falls within any hotspot
+  Map<String, dynamic>? _checkLocationInHotspot(LatLng location) {
+    if (_hotspots.isEmpty) return null;
+
+    for (var hotspot in _hotspots) {
+      double distance = Geolocator.distanceBetween(
+        location.latitude, location.longitude,
+        hotspot["lat"],
+        hotspot["lng"],
+      );
+
+      double thresholdDistance = hotspot["radius"] ?? 100.0;
+
+      if (distance <= thresholdDistance) {
+        _logger.i("Location (${location.latitude}, ${location.longitude}) is inside hotspot ${hotspot["id"]}");
+        return hotspot; // Return the hotspot data if found
+      }
+    }
+    return null; // Location is not in any hotspot
   }
 
   // --- Location & Map Methods ---
@@ -217,7 +277,7 @@ class _MapScreenState extends State<MapScreen> {
 
     const LocationSettings locationSettings = LocationSettings(
       accuracy: LocationAccuracy.high,
-      distanceFilter: 10,
+      distanceFilter: 10, // Update location every 10 meters
     );
     _positionStreamSubscription = Geolocator.getPositionStream(
       locationSettings: locationSettings,
@@ -256,7 +316,7 @@ class _MapScreenState extends State<MapScreen> {
   // --- Routing Methods ---
   LatLng? _parseCoordinates(String input) {
      try {
-      final parts = input.split(",");
+      final parts = input.replaceAll(' ', '').split(","); // Remove spaces before splitting
       if (parts.length == 2) {
         return LatLng(
           double.parse(parts[0].trim()),
@@ -289,7 +349,9 @@ class _MapScreenState extends State<MapScreen> {
       );
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks.first;
+        // Construct a readable address string
         return [
+          place.name,
           place.street,
           place.subLocality,
           place.locality,
@@ -311,7 +373,7 @@ class _MapScreenState extends State<MapScreen> {
     });
     LatLng? coords = _parseCoordinates(_originController.text);
     coords ??= await _geocodeAddress(_originController.text);
-    String? address = _originController.text;
+    String? address = _originController.text; // Assume input is address unless coords were parsed
     if (coords == null) {
       address = null;
       if (mounted) {
@@ -319,11 +381,34 @@ class _MapScreenState extends State<MapScreen> {
           const SnackBar(content: Text('Could not find starting location.')),
         );
       }
+    } else {
+       // If coords were parsed, try to get an address for the marker
+       address = await _reverseGeocode(coords) ?? _originController.text;
+    }
+
+    // Check if the geocoded origin is in a hotspot before updating state
+    if (coords != null) {
+      final hotspotInfo = _checkLocationInHotspot(coords);
+      if (hotspotInfo != null && mounted) {
+        final riskLevel = hotspotInfo["risk_level"] ?? "unknown";
+        final color = _getHotspotColor(riskLevel);
+        // Use WidgetsBinding to show SnackBar after build
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) { // Check mounted again inside callback
+             ScaffoldMessenger.of(context).showSnackBar(
+               SnackBar(
+                 content: Text("Warning: Starting location is in a $riskLevel-risk hotspot area."),
+                 backgroundColor: color.withAlpha((255 * 0.8).round()), // Replaced deprecated withOpacity
+               ),
+             );
+          }
+        });
+      }
     }
     setState(() {
       _isSearchingOrigin = false;
       _originPosition = coords;
-      _originAddress = address;
+      _originAddress = address; // Store potentially reverse-geocoded address
       _updateMarkers();
     });
   }
@@ -343,6 +428,27 @@ class _MapScreenState extends State<MapScreen> {
           const SnackBar(content: Text('Could not find destination.')),
         );
       }
+    } else {
+       address = await _reverseGeocode(coords) ?? _destinationController.text;
+    }
+
+    // Check if the geocoded destination is in a hotspot before updating state
+    if (coords != null) {
+      final hotspotInfo = _checkLocationInHotspot(coords);
+      if (hotspotInfo != null && mounted) {
+        final riskLevel = hotspotInfo["risk_level"] ?? "unknown";
+        final color = _getHotspotColor(riskLevel);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+             ScaffoldMessenger.of(context).showSnackBar(
+               SnackBar(
+                 content: Text("Warning: Destination is in a $riskLevel-risk hotspot area."),
+                 backgroundColor: color.withAlpha((255 * 0.8).round()), // Replaced deprecated withOpacity
+               ),
+             );
+          }
+        });
+      }
     }
     setState(() {
       _isSearchingDestination = false;
@@ -353,11 +459,19 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _getRoute({bool checkSafety = false}) async {
-    // Clear previous safety highlights
+    // Clear previous route polyline and potentially turn on hotspots for safe route
     setState(() {
-      _showHotspotsOnRoute = checkSafety;
-      // Reset polyline color if needed
       _polylines.removeWhere((p) => p.polylineId == const PolylineId("route"));
+      _polylines.removeWhere((p) => p.polylineId == const PolylineId("alternate_route")); // Also clear alternate
+      _polylineCoordinates.clear();
+      // *** Automatically enable hotspot visibility when calculating a safe route ***
+      if (checkSafety) {
+        _displayAllHotspots = true;
+        // Ensure circles are generated if not already
+        if (_hotspotCircles.isEmpty && _hotspots.isNotEmpty) {
+           _updateHotspotCircles();
+        }
+      }
     });
 
     if (_destinationController.text.isEmpty) {
@@ -368,21 +482,26 @@ class _MapScreenState extends State<MapScreen> {
       }
       return;
     }
+    // Ensure destination is geocoded if text changed or position is null
     if (_destinationPosition == null || _destinationController.text != _destinationAddress) {
       await _geocodeDestination();
-      if (_destinationPosition == null) return;
+      if (_destinationPosition == null) return; // Geocoding failed
     }
 
     LatLng? originCoords;
     if (_useCurrentLocationAsOrigin) {
       originCoords = _currentPosition;
       if (originCoords == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Current location not available.')),
-          );
+        Position? currentPos = await _getLatestLocation(); // Try fetching if null
+        if (currentPos == null) {
+           if (mounted) {
+             ScaffoldMessenger.of(context).showSnackBar(
+               const SnackBar(content: Text('Current location not available.')),
+             );
+           }
+           return;
         }
-        return;
+        originCoords = LatLng(currentPos.latitude, currentPos.longitude);
       }
     } else {
       if (_originController.text.isEmpty) {
@@ -393,70 +512,142 @@ class _MapScreenState extends State<MapScreen> {
         }
         return;
       }
+      // Ensure origin is geocoded if text changed or position is null
       if (_originPosition == null || _originController.text != _originAddress) {
         await _geocodeOrigin();
-        if (_originPosition == null) return;
+        if (_originPosition == null) return; // Geocoding failed
       }
       originCoords = _originPosition;
     }
 
     if (_destinationPosition == null || originCoords == null) return;
 
-    _updateMarkers(); // Ensure origin/destination markers are set
+    _updateMarkers(); // Ensure origin/destination markers are set correctly
 
     try {
       PointLatLng origin = PointLatLng(originCoords.latitude, originCoords.longitude);
       PointLatLng destination = PointLatLng(_destinationPosition!.latitude, _destinationPosition!.longitude);
 
-      final request = PolylineRequest(
+      final _ = PolylineRequest(
         origin: origin,
         destination: destination,
         mode: TravelMode.driving,
+        alternatives: checkSafety, // Request alternatives only when checking safety
       );
 
-      PolylineResult result = await _polylinePoints.getRouteBetweenCoordinates(
-        googleApiKey: googleApiKey,
-        request: request,
-      );
-
-      if (result.points.isNotEmpty) {
-        _polylineCoordinates.clear();
-        for (final point in result.points) {
-          _polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+      // Corrected logic to handle route fetching based on checkSafety
+      List<PolylineResult> results;
+      if (checkSafety) {
+        // Request alternatives only when checking safety
+        final safeRequest = PolylineRequest(
+          origin: origin,
+          destination: destination,
+          mode: TravelMode.driving,
+          alternatives: true, // Explicitly request alternatives
+        );
+        // Use getRouteWithAlternatives which returns List<PolylineResult>
+        results = await _polylinePoints.getRouteWithAlternatives(
+            googleApiKey: googleApiKey,
+            request: safeRequest,
+        );
+      } else {
+        // Request only the default route
+        final defaultRequest = PolylineRequest(
+          origin: origin,
+          destination: destination,
+          mode: TravelMode.driving,
+          alternatives: false, // Explicitly request no alternatives
+        );
+        // Use getRouteBetweenCoordinates which returns PolylineResult
+        PolylineResult singleResult = await _polylinePoints.getRouteBetweenCoordinates(
+            googleApiKey: googleApiKey,
+            request: defaultRequest,
+        );
+        // Wrap the single result in a list for consistent processing later
+        // Check if the result has points before adding to the list
+        if (singleResult.points.isNotEmpty) {
+           results = [singleResult];
+        } else {
+           // Handle error case where even the single route failed
+           results = []; // Assign empty list if single result is invalid
+           _logger.e("Default route calculation failed: ${singleResult.errorMessage}");
         }
+      }
 
-        bool routeIsSafe = true;
+      PolylineResult? selectedResult;
+      bool selectedRouteIsSafe = true; // Assume safe initially
+
+      if (results.isNotEmpty) {
         if (checkSafety) {
-          // Check if route passes through any hotspots
-          routeIsSafe = !_isRouteIntersectingHotspots(_polylineCoordinates, _hotspots);
-          _logger.i("Route safety check: ${routeIsSafe ? 'Clear' : 'Intersects Hotspots'}");
+          // Find the first safe route among alternatives (if any)
+          selectedResult = results.first; // Start with the default route
+          selectedRouteIsSafe = !_isRouteIntersectingHotspots(
+              selectedResult.points.map((p) => LatLng(p.latitude, p.longitude)).toList(),
+              _hotspots
+          );
+
+          if (!selectedRouteIsSafe && results.length > 1) {
+             _logger.i("Default route intersects hotspots. Checking alternatives...");
+             for (int i = 1; i < results.length; i++) {
+                final alternativeResult = results[i];
+                if (alternativeResult.points.isNotEmpty) {
+                   List<LatLng> currentRouteCoords = alternativeResult.points
+                       .map((point) => LatLng(point.latitude, point.longitude))
+                       .toList();
+                   if (!_isRouteIntersectingHotspots(currentRouteCoords, _hotspots)) {
+                     selectedResult = alternativeResult;
+                     selectedRouteIsSafe = true;
+                     _logger.i("Found a safe alternative route (index $i).");
+                     break; // Use the first safe alternative found
+                   }
+                }
+             }
+             if (!selectedRouteIsSafe) {
+                _logger.w("No safe alternative route found. Using the default (unsafe) route.");
+             }
+          }
+        } else {
+          // If not checking safety, just use the first (default) result
+          selectedResult = results.first;
+          selectedRouteIsSafe = true; // Not checked, assume safe for display purposes
         }
 
-        setState(() {
-          // Add or update the route polyline
-          _polylines.add(
-            Polyline(
-              polylineId: const PolylineId("route"),
-              color: checkSafety && !routeIsSafe ? Colors.orange : Colors.blue, // Highlight if unsafe
-              points: _polylineCoordinates,
-              width: 5,
-            ),
-          );
-          // Show hotspot circles if checking safety, regardless of intersection
-          _showHotspotsOnRoute = checkSafety;
-          _updateHotspotCircles(); // Ensure circles are updated based on state
-        });
-        _adjustCameraToFitRoute();
+        if (selectedResult != null && selectedResult.points.isNotEmpty) {
+          _polylineCoordinates.clear();
+          for (final point in selectedResult.points) {
+            _polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+          }
 
-        if (checkSafety && !routeIsSafe && mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Warning: Route passes through hotspot areas.'), backgroundColor: Colors.orange),
-          );
+          setState(() {
+            // Add or update the route polyline
+            _polylines.add(
+              Polyline(
+                polylineId: const PolylineId("route"),
+                color: checkSafety && !selectedRouteIsSafe ? Colors.orange : Colors.blueAccent, // Highlight if unsafe
+                points: _polylineCoordinates,
+                width: 5,
+              ),
+            );
+            _updateHotspotCircles(); // Ensure circles are updated based on fetched data
+          });
+          _adjustCameraToFitRoute();
+
+          if (checkSafety && !selectedRouteIsSafe && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Warning: Route passes through hotspot areas. Consider an alternative."), backgroundColor: Colors.orange),
+            );
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Directions not found: ${selectedResult?.errorMessage ?? results.first.errorMessage ?? 'Unknown error'}")),
+            );
+          }
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Directions not found: ${result.errorMessage ?? 'Unknown error'}")),
+            const SnackBar(content: Text("Directions not found. No routes returned.")),
           );
         }
       }
@@ -469,19 +660,20 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   // Route intersection check with hotspots
-  bool _isRouteIntersectingHotspots(List<LatLng> routePoints, List<LatLng> hotspots) {
+  bool _isRouteIntersectingHotspots(List<LatLng> routePoints, List<Map<String, dynamic>> hotspots) {
     if (hotspots.isEmpty || routePoints.isEmpty) return false;
-    
-    // More robust geometric intersection check
-    const double thresholdDistance = 100; // Meters (should match circle radius)
-    
+
     for (var point in routePoints) {
       for (var hotspot in hotspots) {
         double distance = Geolocator.distanceBetween(
           point.latitude, point.longitude,
-          hotspot.latitude, hotspot.longitude,
+          hotspot['lat'], hotspot['lng'],
         );
+
+        double thresholdDistance = hotspot['radius'] ?? 100.0;
+
         if (distance <= thresholdDistance) {
+          _logger.i("Route intersects hotspot ${hotspot['id']} near (${point.latitude}, ${point.longitude})");
           return true; // Found intersection
         }
       }
@@ -493,14 +685,14 @@ class _MapScreenState extends State<MapScreen> {
     final Set<Marker> updatedMarkers = {};
 
     if (_currentPosition != null) {
-      String? address = await _reverseGeocode(_currentPosition!); // Fetch address
+      String? address = await _reverseGeocode(_currentPosition!); // Fetch address for info window
       updatedMarkers.add(
         Marker(
           markerId: const MarkerId("currentLocation"),
           position: _currentPosition!,
           infoWindow: InfoWindow(
             title: "My Current Location",
-            snippet: address ?? "Fetching address...",
+            snippet: address ?? "Lat: ${_currentPosition!.latitude.toStringAsFixed(4)}, Lng: ${_currentPosition!.longitude.toStringAsFixed(4)}",
           ),
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
         ),
@@ -514,7 +706,7 @@ class _MapScreenState extends State<MapScreen> {
           position: _originPosition!,
           infoWindow: InfoWindow(
             title: "Starting Point",
-            snippet: _originAddress ?? "Custom location",
+            snippet: _originAddress ?? "Lat: ${_originPosition!.latitude.toStringAsFixed(4)}, Lng: ${_originPosition!.longitude.toStringAsFixed(4)}",
           ),
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
         ),
@@ -528,7 +720,7 @@ class _MapScreenState extends State<MapScreen> {
           position: _destinationPosition!,
           infoWindow: InfoWindow(
             title: "Destination",
-            snippet: _destinationAddress ?? "Selected destination",
+            snippet: _destinationAddress ?? "Lat: ${_destinationPosition!.latitude.toStringAsFixed(4)}, Lng: ${_destinationPosition!.longitude.toStringAsFixed(4)}",
           ),
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
         ),
@@ -558,6 +750,20 @@ class _MapScreenState extends State<MapScreen> {
       maxLng = max(maxLng, point.longitude);
     }
 
+    // Also consider origin and destination markers if they exist
+    if (_originPosition != null) {
+       minLat = min(minLat, _originPosition!.latitude);
+       maxLat = max(maxLat, _originPosition!.latitude);
+       minLng = min(minLng, _originPosition!.longitude);
+       maxLng = max(maxLng, _originPosition!.longitude);
+    }
+     if (_destinationPosition != null) {
+       minLat = min(minLat, _destinationPosition!.latitude);
+       maxLat = max(maxLat, _destinationPosition!.latitude);
+       minLng = min(minLng, _destinationPosition!.longitude);
+       maxLng = max(maxLng, _destinationPosition!.longitude);
+    }
+
     final bounds = LatLngBounds(
       southwest: LatLng(minLat, minLng),
       northeast: LatLng(maxLat, maxLng),
@@ -567,7 +773,7 @@ class _MapScreenState extends State<MapScreen> {
       _googleMapController ??= await _mapController.future;
       if (_googleMapController != null) {
          _googleMapController!.animateCamera(
-           CameraUpdate.newLatLngBounds(bounds, 50.0), // 50.0 padding
+           CameraUpdate.newLatLngBounds(bounds, 60.0), // Increased padding
          );
       }
     } catch (e) {
@@ -586,6 +792,18 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Added AppBar for better structure
+      appBar: AppBar(
+        title: const Text("Safe Route Finder"),
+        actions: [
+          // Refresh hotspots button
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh Hotspots',
+            onPressed: _isLoadingHotspots ? null : _fetchHotspots,
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           GoogleMap(
@@ -596,17 +814,18 @@ class _MapScreenState extends State<MapScreen> {
                 _mapController.complete(controller);
               }
               _googleMapController = controller;
-              // Optionally move camera to current location once map is ready
-              if (_currentPosition != null) {
+              // Move camera to current location once map is ready and permission granted
+              if (_locationPermissionGranted && _currentPosition != null) {
                 _moveCameraToPosition(_currentPosition!);
               }
             },
             myLocationEnabled: _locationPermissionGranted,
-            myLocationButtonEnabled: false, // Using custom buttons
+            myLocationButtonEnabled: false, // Using custom FAB
             markers: _markers,
             polylines: _polylines,
-            circles: _showHotspotsOnRoute ? _hotspotCircles : const {}, // Show hotspots conditionally
-            padding: const EdgeInsets.only(bottom: 180, top: 60), // Adjust padding for controls
+            // Corrected logic: Show circles only if the toggle is enabled
+            circles: _displayAllHotspots ? _hotspotCircles : const {},
+            padding: const EdgeInsets.only(bottom: 60, top: 180), // Adjusted padding for controls and FABs
           ),
           // Routing Controls Overlay
           Positioned(
@@ -616,11 +835,11 @@ class _MapScreenState extends State<MapScreen> {
             child: Card(
               elevation: 4,
               child: Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(12.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Origin Input
+                    // Origin Input Row
                     Row(
                       children: [
                         Checkbox(
@@ -632,7 +851,12 @@ class _MapScreenState extends State<MapScreen> {
                                 _originController.clear();
                                 _originPosition = null;
                                 _originAddress = null;
-                                _updateMarkers();
+                                _updateMarkers(); // Remove origin marker if switching to current location
+                              } else {
+                                // Optionally try to geocode if text exists when unchecked
+                                if (_originController.text.isNotEmpty) {
+                                  _geocodeOrigin();
+                                }
                               }
                             });
                           },
@@ -644,33 +868,71 @@ class _MapScreenState extends State<MapScreen> {
                             decoration: InputDecoration(
                               labelText: _useCurrentLocationAsOrigin ? 'Using Current Location' : 'Enter Starting Location',
                               hintText: 'Address or Lat,Lng',
-                              suffixIcon: _isSearchingOrigin
-                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                                  : (_useCurrentLocationAsOrigin || _originController.text.isEmpty)
-                                      ? null
-                                      : IconButton(icon: const Icon(Icons.search), onPressed: _geocodeOrigin),
+                              // Clear button for origin
+                              suffixIcon: !_useCurrentLocationAsOrigin && _originController.text.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: () {
+                                      _originController.clear();
+                                      setState(() {
+                                        _originPosition = null;
+                                        _originAddress = null;
+                                        _updateMarkers();
+                                      });
+                                    },
+                                  )
+                                : null,
                             ),
-                            onFieldSubmitted: (_) => _geocodeOrigin(),
+                            onFieldSubmitted: (_) {
+                              if (!_useCurrentLocationAsOrigin) _geocodeOrigin();
+                            },
                           ),
                         ),
+                        // Search button for origin (only if manual input)
+                        if (!_useCurrentLocationAsOrigin)
+                          _isSearchingOrigin
+                            ? const Padding(padding: EdgeInsets.all(8.0), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
+                            : IconButton(icon: const Icon(Icons.search), onPressed: _geocodeOrigin),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    // Destination Input
-                    TextFormField(
-                      controller: _destinationController,
-                      decoration: InputDecoration(
-                        labelText: 'Enter Destination Location',
-                        hintText: 'Address or Lat,Lng',
-                        suffixIcon: _isSearchingDestination
-                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                            : (_destinationController.text.isEmpty)
-                                ? null
-                                : IconButton(icon: const Icon(Icons.search), onPressed: _geocodeDestination),
-                      ),
-                      onFieldSubmitted: (_) => _geocodeDestination(),
+                    // Destination Input Row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _destinationController,
+                            decoration: InputDecoration(
+                              labelText: 'Enter Destination Location',
+                              hintText: 'Address or Lat,Lng',
+                              // Clear button for destination
+                              suffixIcon: _destinationController.text.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: () {
+                                      _destinationController.clear();
+                                      setState(() {
+                                        _destinationPosition = null;
+                                        _destinationAddress = null;
+                                        _updateMarkers();
+                                        // Clear route as well
+                                        _polylines.clear();
+                                        _polylineCoordinates.clear();
+                                      });
+                                    },
+                                  )
+                                : null,
+                            ),
+                            onFieldSubmitted: (_) => _geocodeDestination(),
+                          ),
+                        ),
+                        // Search button for destination
+                        _isSearchingDestination
+                          ? const Padding(padding: EdgeInsets.all(8.0), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
+                          : IconButton(icon: const Icon(Icons.search), onPressed: _geocodeDestination),
+                      ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     // Action Buttons Row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -678,12 +940,16 @@ class _MapScreenState extends State<MapScreen> {
                         ElevatedButton.icon(
                           icon: const Icon(Icons.directions),
                           label: const Text('Route'),
-                          onPressed: () => _getRoute(checkSafety: false),
+                          onPressed: (_destinationPosition != null || _destinationController.text.isNotEmpty) && (_useCurrentLocationAsOrigin || _originPosition != null || _originController.text.isNotEmpty)
+                              ? () => _getRoute(checkSafety: false)
+                              : null, // Disable if no destination/origin
                         ),
                         ElevatedButton.icon(
                           icon: const Icon(Icons.shield_outlined),
                           label: const Text('Safe Route'),
-                          onPressed: () => _getRoute(checkSafety: true),
+                          onPressed: (_destinationPosition != null || _destinationController.text.isNotEmpty) && (_useCurrentLocationAsOrigin || _originPosition != null || _originController.text.isNotEmpty)
+                              ? () => _getRoute(checkSafety: true)
+                              : null, // Disable if no destination/origin
                           style: ElevatedButton.styleFrom(backgroundColor: Colors.lightGreen),
                         ),
                       ],
@@ -693,7 +959,46 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ),
           ),
-          // Map Type Toggle Buttons
+          // Floating Action Buttons Area
+          Positioned(
+            bottom: 10,
+            right: 10,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                // Center on My Location Button
+                FloatingActionButton(
+                  mini: true,
+                  heroTag: 'fab_location', // Unique heroTag
+                  tooltip: 'Center on My Location',
+                  onPressed: _locationPermissionGranted && _currentPosition != null
+                      ? () => _moveCameraToPosition(_currentPosition!, animate: true)
+                      : null,
+                  child: const Icon(Icons.my_location),
+                ),
+                const SizedBox(height: 8),
+                // Hotspot toggle button
+                FloatingActionButton(
+                  mini: true,
+                  heroTag: 'fab_hotspots', // Unique heroTag
+                  tooltip: 'Toggle Hotspots Display',
+                  backgroundColor: _displayAllHotspots ? Theme.of(context).colorScheme.secondary : Colors.grey[300],
+                  onPressed: () {
+                    setState(() {
+                      _displayAllHotspots = !_displayAllHotspots;
+                      // If turning on and circles haven't been generated yet, generate them.
+                      if (_displayAllHotspots && _hotspotCircles.isEmpty && _hotspots.isNotEmpty) {
+                        _updateHotspotCircles();
+                      }
+                    });
+                  },
+                  // Corrected icon logic based on _displayAllHotspots
+                  child: Icon(_displayAllHotspots ? Icons.visibility : Icons.visibility_off),
+                ),
+              ],
+            ),
+          ),
+          // Map Type Toggle Buttons (Moved to bottom left)
           Positioned(
             bottom: 10,
             left: 10,
@@ -723,19 +1028,14 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ),
           ),
-          // Center on My Location Button
-          Positioned(
-            bottom: 10,
-            right: 10,
-            child: FloatingActionButton(
-              mini: true,
-              tooltip: 'Center on My Location',
-              onPressed: _locationPermissionGranted && _currentPosition != null
-                  ? () => _moveCameraToPosition(_currentPosition!, animate: true)
-                  : null,
-              child: const Icon(Icons.my_location),
+          // Show loading indicator when fetching hotspots
+          if (_isLoadingHotspots)
+            Container(
+              color: Colors.black.withAlpha((255 * 0.3).round()), // Replaced deprecated withOpacity
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
             ),
-          ),
         ],
       ),
     );
